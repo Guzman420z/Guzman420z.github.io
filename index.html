@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transporte de Datos y Protocolos de Aplicación | Redes de Computadoras I</title>
+<meta name="description" content="Blog académico sobre TCP, UDP, DNS, DHCP, HTTP, HTTPS, SMTP, POP3, IMAP, FTP y TFTP.">
+<style>
+:root{
+  --bg:#f6f8fa; --panel:#ffffff; --ink:#1b2430; --muted:#5b6778; --line:#dde3ea;
+  --accent:#0a7cff; --accent2:#12a37f; --warn:#d9822b; --code-bg:#0e1621; --code-ink:#d6e2f0;
+  --tcp:#0a7cff; --udp:#d9822b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1118; --panel:#121b26; --ink:#e4ebf3; --muted:#93a1b3; --line:#243244;
+    --accent:#4da3ff; --accent2:#2fd1a6; --warn:#f0a050; --code-bg:#070c12; --code-ink:#cfe0f3;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1118; --panel:#121b26; --ink:#e4ebf3; --muted:#93a1b3; --line:#243244;
+  --accent:#4da3ff; --accent2:#2fd1a6; --warn:#f0a050; --code-bg:#070c12; --code-ink:#cfe0f3;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+code,pre,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+code{background:color-mix(in srgb,var(--accent) 12%,transparent);padding:.1em .4em;border-radius:5px;font-size:.88em}
+pre{background:var(--code-bg);color:var(--code-ink);padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:14px;line-height:1.55;border:1px solid var(--line);margin:1em 0}
+pre code{background:none;padding:0;font-size:inherit}
+pre .c{color:#7f93a8} pre .k{color:#6cc1ff} pre .s{color:#8fe3b4} pre .w{color:#f3b36b}
+
+/* Barra superior */
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1180px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:14px}
+.brand{font-weight:700;letter-spacing:.02em;color:inherit;text-decoration:none}
+.brand span{color:var(--accent2)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+
+/* Carátula */
+.cover{background:#0a1a2f;color:#fff;position:relative;overflow:hidden;border-bottom:4px solid var(--accent2)}
+.cover::before{content:"";position:absolute;inset:0;background:radial-gradient(900px 420px at 88% -10%,rgba(18,163,127,.38),transparent 60%),radial-gradient(760px 420px at -5% 110%,rgba(10,124,255,.38),transparent 60%)}
+.cover::after{content:"";position:absolute;inset:0;opacity:.06;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:44px 44px}
+.cover-in{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:60px 24px 56px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px;align-items:center}
+.cover h1{font-size:clamp(32px,4.6vw,52px);line-height:1.12;margin:0 0 16px;letter-spacing:-.01em}
+.cover .sub{font-size:19px;line-height:1.55;opacity:.88;margin:0 0 28px;max-width:34em}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:30px}
+.cta a{padding:11px 22px;border-radius:10px;font-weight:600;text-decoration:none;font-size:16px}
+.cta .b1{background:#fff;color:#0a1a2f}
+.cta .b1:hover{background:#e8f2ff}
+.cta .b2{border:1px solid rgba(255,255,255,.5);color:#fff}
+.cta .b2:hover{background:rgba(255,255,255,.12)}
+.ports{display:flex;flex-wrap:wrap;gap:8px}
+.ports span{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;padding:4px 10px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(255,255,255,.07)}
+.stack{display:grid;gap:10px}
+.stack .sl{padding:16px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);backdrop-filter:blur(6px)}
+.stack .sl b{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.stack .sl span{font:500 14.5px/1.5 ui-monospace,Menlo,monospace;opacity:.9}
+.stack .a{border-left:4px solid #2fd1a6}
+.stack .t{border-left:4px solid #4da3ff;background:rgba(77,163,255,.14)}
+.stack .i{border-left:4px solid #f0a050}
+.stack .f{border-left:4px solid #93a1b3}
+.ph{background:color-mix(in srgb,var(--warn) 18%,transparent);padding:1px 8px;border-radius:5px;border:1px dashed var(--warn);font-weight:500}
+
+/* Acerca del curso */
+.facts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0 8px}
+.fact{border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.fact small{display:block;text-transform:uppercase;letter-spacing:.1em;font-size:11.5px;color:var(--muted);margin-bottom:2px}
+.fact b{font-size:17px;line-height:1.4}
+.fact.wide{grid-column:1/-1}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:14px 0}
+.legend{font-size:14.5px;color:var(--muted);margin:6px 0 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin:0 4px 0 12px;vertical-align:-1px}
+.legend i:first-child{margin-left:0}
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:14px 0 4px}
+.topic{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);transition:transform .15s,border-color .15s,box-shadow .15s}
+.topic:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 20px rgba(10,30,60,.10)}
+.topic .t{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.topic strong{font-size:18px}
+.topic .pt{font:600 12px ui-monospace,Menlo,monospace;color:var(--muted)}
+.topic p{margin:5px 0 0;font-size:14.5px;line-height:1.45;color:var(--muted)}
+.topic.tcpc{border-top:3px solid var(--tcp)}
+.topic.udpc{border-top:3px solid var(--udp)}
+.topic.bothc{border-top:3px solid var(--accent2)}
+
+/* Navegación */
+.toplinks a{color:var(--muted);text-decoration:none;font-size:15px;margin-right:18px}
+.toplinks a:hover{color:var(--ink)}
+#jump{display:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 8px;font:inherit;font-size:14px;max-width:150px}
+.totop{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font-size:20px;opacity:0;pointer-events:none;transition:opacity .2s;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:30}
+.totop.show{opacity:1;pointer-events:auto}
+
+/* Layout */
+.wrap{max-width:1180px;margin:0 auto;padding:30px 20px 60px;display:grid;grid-template-columns:240px 1fr;gap:38px}
+nav.toc{position:sticky;top:76px;align-self:start;max-height:calc(100vh - 100px);overflow:auto;font-size:15px}
+nav.toc h4{margin:0 0 8px;text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--muted)}
+nav.toc a{display:block;padding:5px 12px;border-left:3px solid var(--line);color:var(--muted);text-decoration:none}
+nav.toc a:hover{color:var(--ink)}
+nav.toc a.on{border-left-color:var(--accent);color:var(--ink);font-weight:600}
+nav.toc .grp{margin:14px 0 4px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+
+main{min-width:0}
+article{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px 34px;margin-bottom:28px}
+article h2{margin:0 0 4px;font-size:30px;line-height:1.2}
+article h2 .num{color:var(--accent);font-family:ui-monospace,monospace;margin-right:8px}
+article h3{margin:28px 0 6px;font-size:20px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 20px}
+.tag{font:600 12.5px ui-monospace,Menlo,monospace;padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tag.tcp{color:var(--tcp);border-color:var(--tcp)} .tag.udp{color:var(--udp);border-color:var(--udp)}
+.tag.p{color:var(--accent2);border-color:var(--accent2)}
+.lead{font-size:19px;color:var(--muted);margin-top:0}
+.note{border-left:4px solid var(--accent2);background:color-mix(in srgb,var(--accent2) 10%,transparent);padding:10px 16px;border-radius:0 8px 8px 0;margin:18px 0}
+.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.note b:first-child{display:block;margin-bottom:2px}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:15.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+th{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+ul,ol{padding-left:22px} li{margin:4px 0}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mini{border:1px solid var(--line);border-radius:10px;padding:4px 16px 12px}
+.mini h4{margin:12px 0 4px}
+.diagram{font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.35;background:var(--code-bg);color:var(--code-ink);padding:16px;border-radius:10px;overflow-x:auto;white-space:pre;border:1px solid var(--line)}
+
+/* Capas */
+.layers{display:grid;gap:6px;margin:18px 0;max-width:520px}
+.layers div{padding:10px 16px;border-radius:8px;border:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.layers .a{background:color-mix(in srgb,var(--accent2) 16%,transparent)}
+.layers .t{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.layers .i{background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.layers .f{background:color-mix(in srgb,var(--muted) 14%,transparent)}
+
+footer{border-top:1px solid var(--line);padding:28px 20px 40px;text-align:center;color:var(--muted);font-size:14px}
+
+@media (max-width:900px){
+  .wrap{grid-template-columns:1fr}
+  nav.toc{display:none}
+  article{padding:22px 18px}
+  .cols{grid-template-columns:1fr}
+  .cover-in{grid-template-columns:1fr;gap:32px;padding:40px 20px 40px}
+  .toplinks{display:none}
+  #jump{display:inline-block}
+  .facts,.cols3{grid-template-columns:1fr}
+}
+@media print{.topbar,nav.toc,.btn,.totop,.cta{display:none}.wrap{display:block}article{break-inside:avoid-page}}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="brand" href="#caratula">redes<span>/</span>transporte</a>
+  <div class="toplinks">
+    <a href="#acerca">Acerca del curso</a><a href="#tcp">Transporte</a><a href="#dns">Aplicación</a><a href="#resumen">Resumen</a>
+  </div>
+  <div class="spacer"></div>
+  <select id="jump" aria-label="Ir a una sección">
+    <option value="">Ir a…</option>
+    <option value="acerca">Acerca del curso</option><option value="intro">Introducción</option>
+    <option value="tcp">1. TCP</option><option value="udp">2. UDP</option><option value="tcp-udp">TCP vs UDP</option>
+    <option value="dns">3. DNS</option><option value="dhcp">4. DHCP</option><option value="http">5. HTTP</option>
+    <option value="https">6. HTTPS</option><option value="smtp">7. SMTP</option><option value="pop3">8. POP3</option>
+    <option value="imap">9. IMAP</option><option value="ftp">10. FTP</option><option value="tftp">11. TFTP</option>
+    <option value="resumen">Tabla resumen</option><option value="conclusiones">Conclusiones</option><option value="refs">Referencias</option>
+  </select>
+  <button class="btn" id="theme" type="button">Cambiar tema</button>
+</div></div>
+
+<!-- ============ CARÁTULA ============ -->
+<header class="cover" id="caratula"><div class="cover-in">
+  <div class="hero">
+    <h1>Transporte de Datos y Protocolos de Aplicación</h1>
+    <p class="sub">Cómo viajan los datos entre aplicaciones: desde los segmentos TCP y UDP hasta la web, el correo electrónico y la transferencia de archivos.</p>
+    <div class="cta">
+      <a class="b1" href="#intro">Comenzar a leer</a>
+      <a class="b2" href="#acerca">Datos del curso</a>
+    </div>
+  </div>
+  <div class="stack" aria-hidden="true">
+    <div class="sl a"><b>Aplicación</b><span>DNS · DHCP · HTTP(S) · SMTP · POP3 · IMAP · FTP · TFTP</span></div>
+    <div class="sl t"><b>Transporte</b><span>TCP · UDP</span></div>
+    <div class="sl i"><b>Internet</b><span>IP</span></div>
+    <div class="sl f"><b>Acceso a la red</b><span>Ethernet · Wi-Fi</span></div>
+  </div>
+</div></header>
+
+<div class="wrap">
+<nav class="toc" id="toc">
+  <h4>Contenido</h4>
+  <a href="#acerca">Acerca del curso</a>
+  <a href="#intro">Introducción</a>
+  <div class="grp">Capa de transporte</div>
+  <a href="#tcp">1. TCP</a>
+  <a href="#udp">2. UDP</a>
+  <a href="#tcp-udp">TCP vs UDP</a>
+  <div class="grp">Capa de aplicación</div>
+  <a href="#dns">3. DNS</a>
+  <a href="#dhcp">4. DHCP</a>
+  <a href="#http">5. HTTP</a>
+  <a href="#https">6. HTTPS</a>
+  <a href="#smtp">7. SMTP</a>
+  <a href="#pop3">8. POP3</a>
+  <a href="#imap">9. IMAP</a>
+  <a href="#ftp">10. FTP</a>
+  <a href="#tftp">11. TFTP</a>
+  <div class="grp">Cierre</div>
+  <a href="#resumen">Tabla resumen</a>
+  <a href="#conclusiones">Conclusiones</a>
+  <a href="#refs">Referencias</a>
+</nav>
+
+<main>
+
+<!-- ============ ACERCA DEL CURSO ============ -->
+<article id="acerca">
+  <h2>Acerca del curso y del blog</h2>
+  <p class="lead">Material de estudio elaborado para el curso de Redes de Computadoras I de la Universidad Mariano Gálvez de Guatemala.</p>
+
+  <h3>Datos del curso</h3>
+  <div class="facts">
+    <div class="fact wide"><small>Institución</small><b>Universidad Mariano Gálvez de Guatemala (UMG)</b></div>
+    <div class="fact wide"><small>Carrera</small><b>Ingeniería en Sistemas de Información y Ciencias de la Computación</b></div>
+    <div class="fact"><small>Curso</small><b>Redes de Computadoras I</b></div>
+    <div class="fact"><small>Tema del blog</small><b>Transporte de Datos y Protocolos de Aplicación</b></div>
+    <div class="fact"><small>Catedrático</small><b>Carlos Augusto Godínez Guzmán</b></div>
+    <div class="fact"><small>Sección</small><b>B</b></div>
+  </div>
+
+  <h3>Datos del estudiante</h3>
+  <div class="facts">
+    <div class="fact"><small>Nombre</small><b>Cristian Leonardo Guzmán de León</b></div>
+    <div class="fact"><small>Carné</small><b>0903-23-14434</b></div>
+  </div>
+
+  <h3>Sobre este blog</h3>
+  <p>Este blog reúne, de forma ordenada y con ejemplos, los protocolos que hacen posible la comunicación entre aplicaciones en una red. Primero se estudia la capa de transporte (TCP y UDP) y después los principales protocolos de la capa de aplicación: DNS, DHCP, HTTP, HTTPS, SMTP, POP3, IMAP, FTP y TFTP.</p>
+  <div class="cols3">
+    <div class="mini"><h4>Objetivo</h4><p>Comprender cómo viajan los datos entre aplicaciones, qué puerto y qué transporte usa cada servicio y cómo se diagnostica su funcionamiento.</p></div>
+    <div class="mini"><h4>Alcance</h4><p>11 temas en dos capas, con diagramas del intercambio de mensajes, sesiones de ejemplo y comandos para practicar.</p></div>
+    <div class="mini"><h4>Cómo navegar</h4><p>Usa el índice lateral (o el menú «Ir a…» en el celular), el mapa de contenidos de abajo o la tabla resumen final.</p></div>
+  </div>
+
+  <h3>Mapa de contenidos</h3>
+  <p class="legend"><i style="background:var(--tcp)"></i>TCP <i style="background:var(--udp)"></i>UDP <i style="background:var(--accent2)"></i>TCP y UDP</p>
+  <div class="topics">
+    <a class="topic tcpc" href="#tcp"><div class="t"><strong>TCP</strong><span class="pt">Transporte</span></div><p>Entrega fiable y ordenada, con conexión.</p></a>
+    <a class="topic udpc" href="#udp"><div class="t"><strong>UDP</strong><span class="pt">Transporte</span></div><p>Entrega rápida y ligera, sin conexión.</p></a>
+    <a class="topic bothc" href="#dns"><div class="t"><strong>DNS</strong><span class="pt">:53</span></div><p>Traduce nombres de dominio en direcciones IP.</p></a>
+    <a class="topic udpc" href="#dhcp"><div class="t"><strong>DHCP</strong><span class="pt">:67 / 68</span></div><p>Asigna IP y configuración de red automáticamente.</p></a>
+    <a class="topic tcpc" href="#http"><div class="t"><strong>HTTP</strong><span class="pt">:80</span></div><p>El protocolo de la Web: peticiones y respuestas.</p></a>
+    <a class="topic tcpc" href="#https"><div class="t"><strong>HTTPS</strong><span class="pt">:443</span></div><p>HTTP cifrado con TLS, seguro y autenticado.</p></a>
+    <a class="topic tcpc" href="#smtp"><div class="t"><strong>SMTP</strong><span class="pt">:25 / 587</span></div><p>Envío de correo electrónico.</p></a>
+    <a class="topic tcpc" href="#pop3"><div class="t"><strong>POP3</strong><span class="pt">:110</span></div><p>Descarga el correo al equipo local.</p></a>
+    <a class="topic tcpc" href="#imap"><div class="t"><strong>IMAP</strong><span class="pt">:143</span></div><p>Gestiona el correo sincronizado en el servidor.</p></a>
+    <a class="topic tcpc" href="#ftp"><div class="t"><strong>FTP</strong><span class="pt">:21</span></div><p>Transferencia de archivos con dos canales.</p></a>
+    <a class="topic udpc" href="#tftp"><div class="t"><strong>TFTP</strong><span class="pt">:69</span></div><p>Transferencia mínima de archivos, sin login.</p></a>
+  </div>
+</article>
+
+<!-- ============ INTRODUCCIÓN ============ -->
+<article id="intro">
+  <h2>Introducción</h2>
+  <p class="lead">Cuando abres una página web, envías un correo o descargas un archivo, intervienen muchos protocolos que cooperan sin que lo notes. Este blog explica los once que forman la base de esa cooperación.</p>
+  <p>Un <b>protocolo</b> es un conjunto de reglas que define el formato de los mensajes, el orden en que se intercambian y qué hacer ante errores. En Internet, esas reglas se organizan en capas (modelo TCP/IP). Cada capa ofrece un servicio a la de arriba y usa el de la de abajo:</p>
+  <div class="layers">
+    <div class="a"><b>Aplicación</b><span>HTTP, HTTPS, DNS, DHCP, SMTP, POP3, IMAP, FTP, TFTP</span></div>
+    <div class="t"><b>Transporte</b><span>TCP, UDP</span></div>
+    <div class="i"><b>Internet (red)</b><span>IP, ICMP</span></div>
+    <div class="f"><b>Acceso a la red</b><span>Ethernet, Wi-Fi</span></div>
+  </div>
+  <h3>¿Qué hace la capa de transporte?</h3>
+  <p>La capa de red (IP) lleva paquetes de un <i>equipo</i> a otro, pero no sabe a qué <i>programa</i> pertenecen. La capa de transporte resuelve eso con los <b>puertos</b> y, según el protocolo, añade fiabilidad, orden y control de congestión. Una conexión se identifica con cuatro datos: <code>IP origen:puerto origen → IP destino:puerto destino</code>.</p>
+  <table>
+    <tr><th>Rango de puertos</th><th>Nombre</th><th>Uso</th></tr>
+    <tr><td>0 – 1023</td><td>Bien conocidos</td><td>Servicios estándar (80, 443, 25, 53…)</td></tr>
+    <tr><td>1024 – 49151</td><td>Registrados</td><td>Aplicaciones específicas (por ejemplo 3306 para MySQL)</td></tr>
+    <tr><td>49152 – 65535</td><td>Dinámicos / efímeros</td><td>Puertos temporales que el cliente elige para cada conexión</td></tr>
+  </table>
+  <p>Los protocolos de aplicación de este blog siguen casi todos el modelo <b>cliente-servidor</b>: el cliente inicia la comunicación hacia un puerto conocido del servidor.</p>
+</article>
+
+<!-- ============ TCP ============ -->
+<article id="tcp">
+  <h2><span class="num">01</span>TCP — Transmission Control Protocol</h2>
+  <div class="meta"><span class="tag tcp">Transporte</span><span class="tag">Orientado a conexión</span><span class="tag">Fiable</span><span class="tag">RFC 9293</span></div>
+  <p class="lead">TCP entrega los datos completos, en orden y sin duplicados, aunque la red por debajo pierda o desordene paquetes.</p>
+
+  <h3>Características principales</h3>
+  <ul>
+    <li><b>Orientado a conexión:</b> antes de enviar datos, ambos extremos establecen una conexión.</li>
+    <li><b>Fiable:</b> cada byte lleva un número de secuencia y el receptor confirma lo recibido (ACK). Lo que no se confirma se retransmite.</li>
+    <li><b>Ordenado:</b> el receptor reensambla los segmentos en el orden correcto.</li>
+    <li><b>Control de flujo:</b> el receptor anuncia cuánto espacio tiene (<i>ventana</i>) para que el emisor no lo sature.</li>
+    <li><b>Control de congestión:</b> el emisor reduce su velocidad si detecta pérdidas, para no saturar la red.</li>
+    <li><b>Full-duplex:</b> los datos viajan en ambos sentidos a la vez.</li>
+  </ul>
+
+  <h3>El segmento TCP</h3>
+  <div class="diagram">  0                   16                  31
+  +-------------------+-------------------+
+  |  Puerto origen    |  Puerto destino   |
+  +-------------------+-------------------+
+  |        Número de secuencia            |
+  +---------------------------------------+
+  |     Número de confirmación (ACK)      |
+  +------+-------+------+-----------------+
+  | Offs | Rsvd  |Flags |    Ventana      |
+  +------+-------+------+-----------------+
+  |   Checksum    |  Puntero urgente      |
+  +-------------------+-------------------+
+  |       Opciones (MSS, SACK, ...)       |
+  +---------------------------------------+
+  |               DATOS                   |
+  +---------------------------------------+</div>
+  <p>Las <b>banderas</b> (flags) más importantes: <code>SYN</code> (iniciar), <code>ACK</code> (confirmar), <code>FIN</code> (terminar ordenadamente), <code>RST</code> (abortar), <code>PSH</code> (entregar ya a la aplicación) y <code>URG</code>.</p>
+
+  <h3>Establecimiento: el saludo de tres vías</h3>
+  <div class="diagram">  Cliente                                  Servidor
+     |  ---- SYN, seq=100 ----------------&gt;   |   "Quiero conectarme"
+     |  &lt;--- SYN+ACK, seq=300, ack=101 ----   |   "Acepto, y yo también"
+     |  ---- ACK, ack=301 ----------------&gt;   |   "Confirmado"
+     |        (conexión ESTABLECIDA)          |
+     |  ====== datos en ambos sentidos ====   |</div>
+  <p>Los números iniciales de secuencia (ISN) son aleatorios: así se evitan confusiones con conexiones antiguas y se dificulta la suplantación.</p>
+
+  <h3>Fiabilidad con ejemplo</h3>
+  <p>Supón que el emisor envía 3 segmentos de 1000 bytes (seq 1, 1001 y 2001) y el segundo se pierde:</p>
+  <div class="diagram">  Emisor                                   Receptor
+   | -- seq=1    (1000 B) ------------------&gt;  | ACK 1001
+   | -- seq=1001 (1000 B) ------X (se pierde)
+   | -- seq=2001 (1000 B) ------------------&gt;  | ACK 1001  (duplicado: falta 1001)
+   |   ... timeout o 3 ACK duplicados ...
+   | -- seq=1001 (retransmisión) -----------&gt;  | ACK 3001  (ya tiene todo)</div>
+  <p>Con <b>ACK acumulativos</b>, el receptor siempre indica «el siguiente byte que espero». Tres ACK duplicados disparan la <i>retransmisión rápida</i> sin esperar el temporizador.</p>
+
+  <h3>Control de flujo y de congestión</h3>
+  <ul>
+    <li><b>Ventana deslizante:</b> el emisor puede enviar varios segmentos sin esperar cada ACK, hasta llenar la ventana anunciada por el receptor. Si el receptor anuncia ventana 0, el emisor se detiene.</li>
+    <li><b>Congestión:</b> el emisor mantiene una ventana de congestión (<code>cwnd</code>). Empieza pequeña y crece rápido (<i>slow start</i>, se duplica cada RTT) hasta un umbral; luego crece linealmente (<i>congestion avoidance</i>). Ante una pérdida, la reduce. Algoritmos comunes: Reno, CUBIC, BBR.</li>
+  </ul>
+
+  <h3>Cierre de la conexión</h3>
+  <p>Cada sentido se cierra por separado con <code>FIN</code> y su <code>ACK</code> (cuatro mensajes). Quien cierra primero pasa por el estado <code>TIME_WAIT</code> (unos 60 s) para asegurar que su último ACK llegue y que segmentos tardíos no contaminen una nueva conexión. Un <code>RST</code> corta de inmediato.</p>
+
+  <h3>Probarlo tú mismo</h3>
+<pre><code><span class="c"># Ver conexiones TCP activas y sus estados</span>
+ss -tan          <span class="c"># Linux</span>
+netstat -an      <span class="c"># Windows / macOS</span>
+
+<span class="c"># Probar si un puerto TCP está abierto</span>
+nc -zv ejemplo.com 443</code></pre>
+  <div class="note"><b>Dónde se usa</b>Web, correo, transferencia de archivos, SSH, bases de datos: todo lo que no tolera perder ni desordenar datos.</div>
+</article>
+
+<!-- ============ UDP ============ -->
+<article id="udp">
+  <h2><span class="num">02</span>UDP — User Datagram Protocol</h2>
+  <div class="meta"><span class="tag udp">Transporte</span><span class="tag">Sin conexión</span><span class="tag">Ligero</span><span class="tag">RFC 768</span></div>
+  <p class="lead">UDP envía datagramas sin establecer conexión, sin confirmaciones y sin reordenar. Es simple y rápido, a cambio de no garantizar nada.</p>
+
+  <h3>El datagrama UDP</h3>
+  <div class="diagram">  0                   16                  31
+  +-------------------+-------------------+
+  |  Puerto origen    |  Puerto destino   |
+  +-------------------+-------------------+
+  |    Longitud       |    Checksum       |
+  +-------------------+-------------------+
+  |               DATOS                   |
+  +---------------------------------------+</div>
+  <p>Solo <b>8 bytes</b> de cabecera, frente a los 20 o más de TCP. El checksum detecta corrupción, pero un datagrama dañado simplemente se descarta.</p>
+
+  <h3>Ventajas</h3>
+  <ul>
+    <li><b>Baja latencia:</b> no hay saludo inicial; el primer paquete ya lleva datos.</li>
+    <li><b>Poca sobrecarga:</b> sin estado de conexión en el servidor, que puede atender a muchísimos clientes.</li>
+    <li><b>Mensajes con límites:</b> cada <code>send()</code> es un datagrama; TCP, en cambio, es un flujo de bytes sin fronteras.</li>
+    <li><b>Difusión y multidifusión:</b> permite enviar a muchos destinos (DHCP usa broadcast).</li>
+  </ul>
+
+  <h3>Desventajas</h3>
+  <ul>
+    <li>Puede perder, duplicar o desordenar datagramas, y la aplicación debe tolerarlo o resolverlo.</li>
+    <li>No tiene control de congestión: una aplicación UDP mal diseñada puede saturar la red.</li>
+  </ul>
+
+  <h3>Ejemplo: consulta con UDP</h3>
+<pre><code><span class="c"># Enviar un datagrama UDP de prueba (escucha en una terminal, envía en otra)</span>
+nc -u -l 9000              <span class="c"># receptor</span>
+echo "hola" | nc -u 127.0.0.1 9000   <span class="c"># emisor</span></code></pre>
+  <div class="note"><b>Dónde se usa</b>DNS, DHCP, TFTP, VoIP, videollamadas, videojuegos en línea, streaming en vivo, SNMP, NTP y el protocolo QUIC (base de HTTP/3), que construye fiabilidad propia encima de UDP.</div>
+</article>
+
+<!-- ============ TCP vs UDP ============ -->
+<article id="tcp-udp">
+  <h2>TCP vs UDP: ¿cuál elegir?</h2>
+  <table>
+    <tr><th>Aspecto</th><th>TCP</th><th>UDP</th></tr>
+    <tr><td>Conexión</td><td>Sí (3 vías)</td><td>No</td></tr>
+    <tr><td>Fiabilidad</td><td>Garantizada (ACK, retransmisión)</td><td>Ninguna</td></tr>
+    <tr><td>Orden</td><td>Garantizado</td><td>No garantizado</td></tr>
+    <tr><td>Control de flujo / congestión</td><td>Sí</td><td>No</td></tr>
+    <tr><td>Cabecera</td><td>20–60 bytes</td><td>8 bytes</td></tr>
+    <tr><td>Modelo de datos</td><td>Flujo de bytes</td><td>Datagramas independientes</td></tr>
+    <tr><td>Velocidad / latencia</td><td>Más lento, más retardo</td><td>Rápido, poco retardo</td></tr>
+    <tr><td>Broadcast / multicast</td><td>No</td><td>Sí</td></tr>
+  </table>
+  <p><b>Regla práctica:</b> si perder un dato es peor que recibirlo tarde (una página, un archivo, un correo), usa TCP. Si un dato tardío es inútil (una palabra en una llamada), usa UDP.</p>
+</article>
+
+<!-- ============ DNS ============ -->
+<article id="dns">
+  <h2><span class="num">03</span>DNS — Domain Name System</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag udp">UDP 53</span><span class="tag tcp">TCP 53</span><span class="tag">RFC 1034 / 1035</span></div>
+  <p class="lead">DNS traduce nombres fáciles de recordar (<code>www.ejemplo.com</code>) en direcciones IP (<code>93.184.216.34</code>). Es la «agenda telefónica» de Internet.</p>
+
+  <h3>Una base de datos jerárquica y distribuida</h3>
+  <div class="diagram">                    .  (raíz)
+         ┌──────────┼──────────┐
+        com        org        gt        ← dominios de nivel superior (TLD)
+         │                     │
+      ejemplo               edu.gt      ← dominios de segundo nivel
+         │
+        www                              ← host
+  Nombre completo (FQDN):  www.ejemplo.com.</div>
+  <p>Ningún servidor lo sabe todo. La responsabilidad se reparte en <b>zonas</b>, y cada zona tiene servidores <i>autoritativos</i>. Existen 13 identidades de servidores raíz (A–M), replicadas mundialmente mediante anycast.</p>
+
+  <h3>Tipos de servidores</h3>
+  <ul>
+    <li><b>Resolutor recursivo</b> (el de tu proveedor, 8.8.8.8, 1.1.1.1): recibe tu consulta y hace todo el trabajo de buscar la respuesta.</li>
+    <li><b>Raíz y TLD:</b> indican quién es responsable del siguiente nivel.</li>
+    <li><b>Autoritativo:</b> contiene la respuesta definitiva de una zona.</li>
+  </ul>
+
+  <h3>Cómo se resuelve un nombre</h3>
+  <div class="diagram">  1. Tu PC  → Resolutor:   ¿www.ejemplo.com?        (consulta recursiva)
+  2. Resolutor → Raíz:     ¿www.ejemplo.com?   → "pregunta a los servidores de .com"
+  3. Resolutor → TLD .com: ¿www.ejemplo.com?   → "pregunta a ns1.ejemplo.com"
+  4. Resolutor → ns1.ejemplo.com: ¿www?        → "93.184.216.34"   (iterativa)
+  5. Resolutor → Tu PC:    93.184.216.34  (y lo guarda en caché según el TTL)</div>
+  <p>La <b>caché</b> y el <b>TTL</b> (tiempo de vida del registro) evitan repetir todo el proceso y hacen que DNS escale.</p>
+
+  <h3>Registros más comunes</h3>
+  <table>
+    <tr><th>Tipo</th><th>Función</th><th>Ejemplo</th></tr>
+    <tr><td><code>A</code></td><td>Nombre → IPv4</td><td><code>www  A  93.184.216.34</code></td></tr>
+    <tr><td><code>AAAA</code></td><td>Nombre → IPv6</td><td><code>www  AAAA  2606:2800:220:1::</code></td></tr>
+    <tr><td><code>CNAME</code></td><td>Alias hacia otro nombre</td><td><code>blog  CNAME  usuario.github.io.</code></td></tr>
+    <tr><td><code>MX</code></td><td>Servidor de correo del dominio</td><td><code>@  MX  10 mail.ejemplo.com.</code></td></tr>
+    <tr><td><code>NS</code></td><td>Servidores autoritativos de la zona</td><td><code>@  NS  ns1.ejemplo.com.</code></td></tr>
+    <tr><td><code>TXT</code></td><td>Texto libre (SPF, verificaciones)</td><td><code>@  TXT  "v=spf1 include:..."</code></td></tr>
+    <tr><td><code>PTR</code></td><td>IP → nombre (resolución inversa)</td><td><code>34.216.184.93.in-addr.arpa  PTR  ...</code></td></tr>
+    <tr><td><code>SOA</code></td><td>Datos de la zona (serial, tiempos)</td><td>—</td></tr>
+  </table>
+
+  <h3>Ejemplo práctico</h3>
+<pre><code>$ dig www.ejemplo.com A
+
+;; ANSWER SECTION:
+www.ejemplo.com.  3600  IN  A  93.184.216.34
+<span class="c">;                  ↑ TTL   ↑ clase   ↑ tipo  ↑ dato</span>
+
+$ nslookup -type=MX gmail.com      <span class="c"># registros de correo</span>
+$ dig -x 8.8.8.8                   <span class="c"># resolución inversa</span>
+$ dig +trace www.ejemplo.com       <span class="c"># ver la resolución paso a paso</span></code></pre>
+
+  <h3>Detalles importantes</h3>
+  <ul>
+    <li><b>UDP por defecto:</b> las consultas son pequeñas, así que UDP es más rápido. Se usa <b>TCP</b> cuando la respuesta es grande (se marca truncada) y en transferencias de zona.</li>
+    <li><b>Seguridad:</b> DNS clásico no cifra ni autentica. <i>DNSSEC</i> firma las respuestas para verificar su origen; <i>DoT</i> (DNS sobre TLS, puerto 853) y <i>DoH</i> (DNS sobre HTTPS) cifran la consulta.</li>
+    <li><b>Ataques típicos:</b> envenenamiento de caché, secuestro de DNS y amplificación DDoS.</li>
+  </ul>
+</article>
+
+<!-- ============ DHCP ============ -->
+<article id="dhcp">
+  <h2><span class="num">04</span>DHCP — Dynamic Host Configuration Protocol</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag udp">UDP 67 (servidor)</span><span class="tag udp">UDP 68 (cliente)</span><span class="tag">RFC 2131</span></div>
+  <p class="lead">DHCP asigna automáticamente la configuración de red a cada equipo que se conecta: dirección IP, máscara, puerta de enlace y servidores DNS.</p>
+
+  <p>Sin DHCP, el administrador tendría que configurar a mano cada dispositivo, con el riesgo de direcciones duplicadas. DHCP gestiona un <b>pool</b> de direcciones y las presta durante un tiempo limitado (<i>lease</i> o concesión).</p>
+
+  <h3>Qué entrega el servidor</h3>
+  <ul>
+    <li>Dirección IP y máscara de subred</li>
+    <li>Puerta de enlace predeterminada (router)</li>
+    <li>Servidores DNS y dominio de búsqueda</li>
+    <li>Duración de la concesión (y otras opciones, como servidor NTP o TFTP)</li>
+  </ul>
+
+  <h3>El proceso DORA</h3>
+  <div class="diagram">  Cliente (sin IP: 0.0.0.0)                      Servidor DHCP
+     |  1. DISCOVER  (broadcast 255.255.255.255) ------&gt; |  "¿Hay algún servidor DHCP?"
+     |  &lt;----- 2. OFFER  (ofrece 192.168.1.50) ---------- |  "Te ofrezco esta IP"
+     |  3. REQUEST  (broadcast: "acepto 192.168.1.50") --&gt; |  "La quiero"
+     |  &lt;----- 4. ACK  (confirma + opciones + lease) ----- |  "Es tuya por 24 h"</div>
+  <p>Usa <b>UDP</b> con <i>broadcast</i> porque el cliente aún no tiene IP ni sabe dónde está el servidor. El <code>REQUEST</code> se envía por broadcast para avisar al resto de servidores DHCP de que su oferta fue rechazada.</p>
+
+  <h3>Renovación de la concesión</h3>
+  <ul>
+    <li><b>T1 (50 % del lease):</b> el cliente pide renovar directamente al servidor (unicast).</li>
+    <li><b>T2 (87,5 %):</b> si no hubo respuesta, intenta con cualquier servidor (broadcast).</li>
+    <li>Al expirar, el cliente debe dejar de usar la IP y reiniciar el proceso. Con <code>DHCPRELEASE</code> la devuelve voluntariamente.</li>
+  </ul>
+
+  <h3>Reservas y relay</h3>
+  <ul>
+    <li><b>Reserva:</b> el servidor asigna siempre la misma IP a una MAC concreta (útil para impresoras o servidores).</li>
+    <li><b>DHCP relay:</b> como el broadcast no cruza routers, un agente de retransmisión reenvía las peticiones a un servidor DHCP central en otra red.</li>
+  </ul>
+
+  <h3>Ejemplo práctico</h3>
+<pre><code><span class="c"># Windows</span>
+ipconfig /release
+ipconfig /renew
+ipconfig /all          <span class="c"># ver servidor DHCP y duración del lease</span>
+
+<span class="c"># Linux</span>
+sudo dhclient -r &amp;&amp; sudo dhclient</code></pre>
+  <div class="note warn"><b>APIPA</b>Si un equipo Windows no obtiene respuesta DHCP, se asigna una dirección <code>169.254.x.x</code>. Verla es señal de que falló DHCP.</div>
+  <div class="note warn"><b>Riesgos</b>Un <i>servidor DHCP falso</i> (rogue) puede entregar un gateway o DNS malicioso, y un atacante puede agotar el pool (DHCP starvation). Los switches administrables se protegen con <i>DHCP snooping</i>.</div>
+</article>
+
+<!-- ============ HTTP ============ -->
+<article id="http">
+  <h2><span class="num">05</span>HTTP — HyperText Transfer Protocol</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag tcp">TCP 80</span><span class="tag">RFC 9110</span><span class="tag">Sin estado</span></div>
+  <p class="lead">HTTP es el protocolo de la Web: define cómo un cliente (navegador, app) pide recursos a un servidor y cómo este responde.</p>
+
+  <h3>Modelo petición-respuesta</h3>
+  <p>El cliente envía una <b>petición</b> (método + ruta + cabeceras) y el servidor devuelve una <b>respuesta</b> (código de estado + cabeceras + cuerpo). Es un protocolo <b>sin estado</b>: cada petición es independiente. Para «recordar» al usuario se usan <i>cookies</i>, tokens o sesiones.</p>
+
+  <h3>Anatomía de un mensaje</h3>
+<pre><code><span class="w">GET /blog/index.html HTTP/1.1</span>      <span class="c">← línea de petición</span>
+Host: www.ejemplo.com                <span class="c">← cabeceras</span>
+User-Agent: Mozilla/5.0
+Accept: text/html
+Accept-Language: es
+                                     <span class="c">← línea en blanco</span>
+
+<span class="w">HTTP/1.1 200 OK</span>                      <span class="c">← línea de estado</span>
+Content-Type: text/html; charset=utf-8
+Content-Length: 5120
+Cache-Control: max-age=3600
+
+&lt;!doctype html&gt;...                   <span class="c">← cuerpo</span></code></pre>
+
+  <h3>Métodos</h3>
+  <table>
+    <tr><th>Método</th><th>Uso</th><th>Seguro</th><th>Idempotente</th></tr>
+    <tr><td><code>GET</code></td><td>Obtener un recurso</td><td>Sí</td><td>Sí</td></tr>
+    <tr><td><code>HEAD</code></td><td>Solo cabeceras, sin cuerpo</td><td>Sí</td><td>Sí</td></tr>
+    <tr><td><code>POST</code></td><td>Enviar datos / crear (formularios)</td><td>No</td><td>No</td></tr>
+    <tr><td><code>PUT</code></td><td>Reemplazar un recurso completo</td><td>No</td><td>Sí</td></tr>
+    <tr><td><code>PATCH</code></td><td>Modificar parcialmente</td><td>No</td><td>No</td></tr>
+    <tr><td><code>DELETE</code></td><td>Eliminar un recurso</td><td>No</td><td>Sí</td></tr>
+    <tr><td><code>OPTIONS</code></td><td>Consultar métodos permitidos (CORS)</td><td>Sí</td><td>Sí</td></tr>
+  </table>
+
+  <h3>Códigos de estado</h3>
+  <table>
+    <tr><th>Familia</th><th>Significado</th><th>Ejemplos</th></tr>
+    <tr><td><b>1xx</b></td><td>Informativo</td><td>101 Switching Protocols</td></tr>
+    <tr><td><b>2xx</b></td><td>Éxito</td><td>200 OK · 201 Created · 204 No Content</td></tr>
+    <tr><td><b>3xx</b></td><td>Redirección</td><td>301 Moved Permanently · 302 Found · 304 Not Modified</td></tr>
+    <tr><td><b>4xx</b></td><td>Error del cliente</td><td>400 Bad Request · 401 Unauthorized · 403 Forbidden · 404 Not Found</td></tr>
+    <tr><td><b>5xx</b></td><td>Error del servidor</td><td>500 Internal Server Error · 502 Bad Gateway · 503 Service Unavailable</td></tr>
+  </table>
+
+  <h3>Cabeceras y conceptos clave</h3>
+  <ul>
+    <li><b>Cookies</b> (<code>Set-Cookie</code> / <code>Cookie</code>): mantienen sesiones sobre un protocolo sin estado.</li>
+    <li><b>Caché</b> (<code>Cache-Control</code>, <code>ETag</code>, <code>If-None-Match</code>): evita descargar de nuevo lo que no cambió (respuesta 304).</li>
+    <li><b>Negociación de contenido</b> (<code>Accept</code>, <code>Accept-Language</code>): el cliente indica qué formatos e idiomas prefiere.</li>
+    <li><b>Conexiones persistentes:</b> HTTP/1.1 reutiliza la misma conexión TCP para varias peticiones (<code>Connection: keep-alive</code>).</li>
+  </ul>
+
+  <h3>Evolución de las versiones</h3>
+  <table>
+    <tr><th>Versión</th><th>Novedad principal</th></tr>
+    <tr><td>HTTP/1.0 (1996)</td><td>Una conexión TCP por cada petición</td></tr>
+    <tr><td>HTTP/1.1 (1997)</td><td>Conexiones persistentes, cabecera <code>Host</code> (hosting virtual), caché mejorada</td></tr>
+    <tr><td>HTTP/2 (2015)</td><td>Formato binario, multiplexación de varias peticiones en una conexión, compresión de cabeceras</td></tr>
+    <tr><td>HTTP/3 (2022)</td><td>Funciona sobre QUIC (UDP): evita el bloqueo de TCP y acelera el inicio</td></tr>
+  </table>
+
+  <h3>Ejemplo práctico</h3>
+<pre><code><span class="c"># Ver la petición y respuesta completas</span>
+curl -v http://ejemplo.com/
+
+<span class="c"># Solo las cabeceras</span>
+curl -I https://www.ejemplo.com
+
+<span class="c"># Enviar datos con POST</span>
+curl -X POST -d "usuario=ana&amp;clave=123" http://ejemplo.com/login
+
+<span class="c"># Ver la conversación a mano (HTTP es texto)</span>
+printf "GET / HTTP/1.1\r\nHost: ejemplo.com\r\n\r\n" | nc ejemplo.com 80</code></pre>
+  <div class="note warn"><b>Importante</b>HTTP en texto plano viaja sin cifrar: cualquiera en la ruta puede leer o modificar el contenido. Por eso existe HTTPS.</div>
+</article>
+
+<!-- ============ HTTPS ============ -->
+<article id="https">
+  <h2><span class="num">06</span>HTTPS — HTTP Secure</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag tcp">TCP 443</span><span class="tag">HTTP + TLS</span><span class="tag">RFC 8446 (TLS 1.3)</span></div>
+  <p class="lead">HTTPS es HTTP dentro de un túnel cifrado con TLS. Los mensajes HTTP son los mismos; lo que cambia es que viajan protegidos.</p>
+
+  <h3>Qué garantiza TLS</h3>
+  <ul>
+    <li><b>Confidencialidad:</b> nadie en el camino puede leer los datos (cifrado).</li>
+    <li><b>Integridad:</b> se detecta cualquier modificación en tránsito.</li>
+    <li><b>Autenticación:</b> el certificado demuestra que hablas con el sitio real y no con un impostor.</li>
+  </ul>
+
+  <h3>Cómo funciona</h3>
+  <p>TLS combina dos tipos de criptografía: la <b>asimétrica</b> (clave pública/privada, lenta) para acordar una clave de forma segura, y la <b>simétrica</b> (una sola clave compartida, rápida) para cifrar los datos.</p>
+  <div class="diagram">  Cliente                                         Servidor
+    |  1. ClientHello (versiones TLS, cifrados, clave) --&gt; |
+    |  &lt;-- 2. ServerHello + Certificado + clave + Finished   |
+    |  [verifica el certificado y su cadena de confianza]     |
+    |  3. Finished -----------------------------------------&gt; |
+    |  ======= Datos HTTP cifrados con clave simétrica ======= |</div>
+  <p>TLS 1.3 completa el saludo en <b>1 RTT</b> (TLS 1.2 necesitaba 2), y usa claves efímeras (<i>forward secrecy</i>): aunque se robe la clave privada del servidor mañana, el tráfico de ayer sigue protegido.</p>
+
+  <h3>Certificados y confianza</h3>
+  <p>Un certificado digital (X.509) vincula un dominio con una clave pública y está firmado por una <b>Autoridad Certificadora (CA)</b>. Tu navegador trae una lista de CA de confianza y valida la cadena: certificado del sitio → CA intermedia → CA raíz. Let's Encrypt ofrece certificados gratuitos y automatizables, y GitHub Pages activa HTTPS para tu blog con un solo clic.</p>
+
+  <h3>Ejemplo práctico</h3>
+<pre><code><span class="c"># Ver el certificado y la versión de TLS negociada</span>
+openssl s_client -connect www.ejemplo.com:443 -servername www.ejemplo.com
+
+<span class="c"># Resumen del certificado</span>
+echo | openssl s_client -connect ejemplo.com:443 2&gt;/dev/null | openssl x509 -noout -subject -issuer -dates</code></pre>
+  <div class="note"><b>Mejoras relacionadas</b><b>HSTS</b> obliga al navegador a usar siempre HTTPS con ese sitio. Redirigir de <code>http://</code> a <code>https://</code> (301) completa la configuración. HTTPS protege el contenido, pero no oculta con quién te comunicas (la IP y, por SNI, el nombre del servidor).</div>
+</article>
+
+<!-- ============ SMTP ============ -->
+<article id="smtp">
+  <h2><span class="num">07</span>SMTP — Simple Mail Transfer Protocol</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag tcp">TCP 25</span><span class="tag tcp">587 (envío)</span><span class="tag tcp">465 (TLS)</span><span class="tag">RFC 5321</span></div>
+  <p class="lead">SMTP se usa para <b>enviar</b> correo: del cliente a su servidor y entre servidores. Es un protocolo de «empuje» (push).</p>
+
+  <h3>El camino de un correo</h3>
+  <div class="diagram">  Ana (cliente)  --SMTP--&gt;  Servidor de Ana  --SMTP--&gt;  Servidor de Luis  --POP3/IMAP--&gt;  Luis
+  (MUA)                      (MSA/MTA)                   (MTA / buzón)                  (MUA)</div>
+  <p>El servidor de origen consulta en DNS el registro <b>MX</b> del dominio destino para saber a qué servidor entregar el mensaje.</p>
+
+  <h3>Conversación SMTP de ejemplo</h3>
+<pre><code>S: 220 mail.ejemplo.com ESMTP listo
+C: EHLO pc-ana.ejemplo.net
+S: 250-mail.ejemplo.com saluda
+S: 250-STARTTLS
+S: 250 AUTH LOGIN PLAIN
+C: MAIL FROM:&lt;ana@ejemplo.net&gt;
+S: 250 OK
+C: RCPT TO:&lt;luis@universidad.edu&gt;
+S: 250 OK
+C: DATA
+S: 354 Escribe el mensaje, termina con una línea con un punto
+C: From: Ana &lt;ana@ejemplo.net&gt;
+C: To: Luis &lt;luis@universidad.edu&gt;
+C: Subject: Tarea de redes
+C:
+C: Hola Luis, te envío el blog terminado.
+C: .
+S: 250 OK mensaje en cola
+C: QUIT
+S: 221 Hasta luego</code></pre>
+  <p>Observa que SMTP es <b>texto</b>, con comandos (<code>HELO/EHLO</code>, <code>MAIL FROM</code>, <code>RCPT TO</code>, <code>DATA</code>, <code>QUIT</code>) y respuestas numéricas: <b>2xx</b> éxito, <b>3xx</b> continuar, <b>4xx</b> error temporal (reintentar), <b>5xx</b> error permanente.</p>
+
+  <h3>Puertos y seguridad</h3>
+  <ul>
+    <li><b>25:</b> entrega entre servidores (muchos ISP lo bloquean a usuarios finales).</li>
+    <li><b>587:</b> envío de clientes con autenticación y <code>STARTTLS</code>.</li>
+    <li><b>465:</b> SMTP sobre TLS implícito.</li>
+    <li><b>Antispam:</b> los dominios publican <b>SPF</b> (qué servidores pueden enviar por ellos), <b>DKIM</b> (firma del mensaje) y <b>DMARC</b> (política si fallan los anteriores), todos en registros DNS TXT.</li>
+    <li><b>Adjuntos:</b> SMTP solo transporta texto ASCII; <b>MIME</b> permite codificar adjuntos, imágenes y caracteres especiales.</li>
+  </ul>
+<pre><code><span class="c"># Probar un servidor SMTP con TLS</span>
+openssl s_client -starttls smtp -connect smtp.ejemplo.com:587</code></pre>
+</article>
+
+<!-- ============ POP3 ============ -->
+<article id="pop3">
+  <h2><span class="num">08</span>POP3 — Post Office Protocol v3</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag tcp">TCP 110</span><span class="tag tcp">995 (TLS)</span><span class="tag">RFC 1939</span></div>
+  <p class="lead">POP3 sirve para <b>recibir</b> correo: el cliente se conecta, descarga los mensajes a su equipo y, normalmente, los borra del servidor.</p>
+
+  <h3>Fases de una sesión</h3>
+  <ol>
+    <li><b>Autorización:</b> el cliente se identifica (<code>USER</code> y <code>PASS</code>).</li>
+    <li><b>Transacción:</b> lista y descarga mensajes (<code>STAT</code>, <code>LIST</code>, <code>RETR</code>, <code>DELE</code>).</li>
+    <li><b>Actualización:</b> con <code>QUIT</code> el servidor ejecuta los borrados marcados y cierra.</li>
+  </ol>
+
+  <h3>Ejemplo de sesión</h3>
+<pre><code>S: +OK POP3 server listo
+C: USER luis
+S: +OK
+C: PASS ********
+S: +OK sesión iniciada
+C: STAT
+S: +OK 2 5120            <span class="c">← 2 mensajes, 5120 bytes en total</span>
+C: LIST
+S: +OK
+S: 1 2048
+S: 2 3072
+S: .
+C: RETR 1                <span class="c">← descargar el mensaje 1</span>
+S: +OK 2048 bytes
+S: (contenido del mensaje)
+S: .
+C: DELE 1                <span class="c">← marcar para borrar</span>
+S: +OK
+C: QUIT
+S: +OK adiós</code></pre>
+  <p>POP3 responde solo con <code>+OK</code> o <code>-ERR</code>.</p>
+
+  <h3>Ventajas y límites</h3>
+  <ul>
+    <li><b>+</b> Simple, ligero, ideal con conexiones lentas o para leer sin conexión, y libera espacio del servidor.</li>
+    <li><b>−</b> No hay carpetas en el servidor ni sincronización: si descargas en el PC, no verás esos correos desde el celular (salvo que configures «dejar copia en el servidor»).</li>
+    <li><b>−</b> En texto plano, las credenciales viajan sin cifrar; usa el puerto <b>995</b> con TLS.</li>
+  </ul>
+</article>
+
+<!-- ============ IMAP ============ -->
+<article id="imap">
+  <h2><span class="num">09</span>IMAP — Internet Message Access Protocol</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag tcp">TCP 143</span><span class="tag tcp">993 (TLS)</span><span class="tag">RFC 9051</span></div>
+  <p class="lead">IMAP también recibe correo, pero deja los mensajes <b>en el servidor</b> y los gestiona desde allí. Así puedes ver el mismo buzón desde varios dispositivos.</p>
+
+  <h3>Qué lo distingue</h3>
+  <ul>
+    <li><b>Sincronización:</b> leer, borrar, mover o marcar un correo se refleja en todos tus dispositivos.</li>
+    <li><b>Carpetas en el servidor:</b> Bandeja de entrada, Enviados, Spam, etiquetas propias.</li>
+    <li><b>Banderas:</b> <code>\Seen</code> (leído), <code>\Answered</code>, <code>\Flagged</code>, <code>\Deleted</code>.</li>
+    <li><b>Descarga parcial:</b> puede traer solo las cabeceras o una parte del mensaje, sin bajar adjuntos pesados.</li>
+    <li><b>Búsqueda en el servidor</b> y <b>IDLE</b> (el servidor avisa en tiempo real de correo nuevo).</li>
+  </ul>
+
+  <h3>Ejemplo de sesión</h3>
+<pre><code>C: a001 LOGIN luis ********
+S: a001 OK sesión iniciada
+C: a002 LIST "" "*"
+S: * LIST () "/" "INBOX"
+S: * LIST () "/" "Enviados"
+S: a002 OK
+C: a003 SELECT INBOX
+S: * 12 EXISTS
+S: * 1 RECENT
+S: a003 OK [READ-WRITE] INBOX seleccionada
+C: a004 FETCH 12 (BODY[HEADER.FIELDS (FROM SUBJECT)])
+S: * 12 FETCH (BODY[HEADER.FIELDS (FROM SUBJECT)] {58}
+S: From: ana@ejemplo.net
+S: Subject: Tarea de redes
+S: )
+S: a004 OK
+C: a005 STORE 12 +FLAGS (\Seen)
+S: a005 OK
+C: a006 LOGOUT</code></pre>
+  <p>Cada comando lleva una <b>etiqueta</b> (<code>a001</code>, <code>a002</code>…) para asociar la respuesta con su comando, lo que permite enviar varios a la vez.</p>
+
+  <h3>POP3 vs IMAP</h3>
+  <table>
+    <tr><th>Característica</th><th>POP3</th><th>IMAP</th></tr>
+    <tr><td>Dónde quedan los correos</td><td>Se descargan al equipo (suelen borrarse del servidor)</td><td>Permanecen en el servidor</td></tr>
+    <tr><td>Varios dispositivos</td><td>Limitado</td><td>Sincronizado</td></tr>
+    <tr><td>Carpetas</td><td>No</td><td>Sí</td></tr>
+    <tr><td>Uso del servidor</td><td>Poco espacio a largo plazo</td><td>Más espacio y conexión</td></tr>
+    <tr><td>Acceso sin conexión</td><td>Total una vez descargado</td><td>Parcial (según caché del cliente)</td></tr>
+    <tr><td>Complejidad</td><td>Simple</td><td>Más complejo y completo</td></tr>
+    <tr><td>Puertos</td><td>110 / 995</td><td>143 / 993</td></tr>
+  </table>
+  <div class="note"><b>Resumen del correo</b><b>SMTP envía; POP3 e IMAP reciben.</b> Hoy IMAP es el estándar de facto porque casi todos usamos varios dispositivos.</div>
+</article>
+
+<!-- ============ FTP ============ -->
+<article id="ftp">
+  <h2><span class="num">10</span>FTP — File Transfer Protocol</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag tcp">TCP 21 (control)</span><span class="tag tcp">TCP 20 (datos)</span><span class="tag">RFC 959</span></div>
+  <p class="lead">FTP transfiere archivos entre un cliente y un servidor. Es de los protocolos más antiguos de Internet y destaca por usar <b>dos conexiones</b> separadas.</p>
+
+  <h3>Dos canales</h3>
+  <ul>
+    <li><b>Canal de control (puerto 21):</b> permanece abierto toda la sesión; lleva los comandos y respuestas (<code>USER</code>, <code>PASS</code>, <code>LIST</code>, <code>RETR</code>, <code>STOR</code>…).</li>
+    <li><b>Canal de datos:</b> se abre solo para transferir un archivo o un listado y se cierra después.</li>
+  </ul>
+
+  <h3>Modo activo y modo pasivo</h3>
+  <div class="diagram">  MODO ACTIVO                                    MODO PASIVO
+  Cliente              Servidor                  Cliente              Servidor
+   | -- control --&gt;  :21 |                        | -- control --&gt;  :21 |
+   | -- PORT ip,puerto --&gt;|                        | -- PASV ----------&gt;|
+   |                     |                        | &lt;-- 227 ip,puerto --|
+   | &lt;-- datos (desde :20 al puerto del cliente) |  | -- datos --&gt; (puerto del servidor)
+  El SERVIDOR inicia el canal de datos           El CLIENTE inicia ambas conexiones</div>
+  <p>El modo activo suele fallar tras un <b>firewall o NAT</b>, porque el servidor intenta conectar hacia el cliente. Por eso hoy se usa casi siempre el <b>modo pasivo</b>.</p>
+
+  <h3>Comandos y respuestas</h3>
+  <table>
+    <tr><th>Comando cliente</th><th>Acción</th></tr>
+    <tr><td><code>USER / PASS</code></td><td>Autenticación</td></tr>
+    <tr><td><code>LIST / NLST</code></td><td>Listar archivos del directorio</td></tr>
+    <tr><td><code>CWD / PWD</code></td><td>Cambiar / mostrar directorio</td></tr>
+    <tr><td><code>RETR archivo</code></td><td>Descargar (retrieve)</td></tr>
+    <tr><td><code>STOR archivo</code></td><td>Subir (store)</td></tr>
+    <tr><td><code>TYPE A / TYPE I</code></td><td>Modo ASCII / binario</td></tr>
+    <tr><td><code>QUIT</code></td><td>Cerrar sesión</td></tr>
+  </table>
+  <p>Las respuestas son códigos como <code>220</code> (listo), <code>230</code> (login correcto), <code>226</code> (transferencia completa), <code>425</code> (no se puede abrir el canal de datos) y <code>530</code> (no autenticado).</p>
+
+  <h3>Ejemplo de sesión</h3>
+<pre><code>$ ftp ftp.ejemplo.com
+220 Servidor FTP listo
+Name: ana
+331 Contraseña requerida
+Password: ********
+230 Login correcto
+ftp&gt; passive
+Passive mode on.
+ftp&gt; binary
+200 Tipo binario
+ftp&gt; ls
+227 Entrando en modo pasivo (203,0,113,5,195,80)
+150 Abriendo conexión de datos
+-rw-r--r--  1 ana  ana  10240  oct 12  informe.pdf
+226 Transferencia completa
+ftp&gt; get informe.pdf
+226 Transferencia completa
+ftp&gt; bye</code></pre>
+  <p>En <code>227 ... (203,0,113,5,195,80)</code>, la IP es <code>203.0.113.5</code> y el puerto es <code>195×256 + 80 = 50000</code>.</p>
+
+  <div class="note warn"><b>Seguridad</b>FTP envía usuario, contraseña y archivos <b>sin cifrar</b>. Alternativas seguras: <b>FTPS</b> (FTP sobre TLS) y <b>SFTP</b> (transferencia sobre SSH, puerto 22; ¡no es lo mismo que FTP!).</div>
+</article>
+
+<!-- ============ TFTP ============ -->
+<article id="tftp">
+  <h2><span class="num">11</span>TFTP — Trivial File Transfer Protocol</h2>
+  <div class="meta"><span class="tag p">Aplicación</span><span class="tag udp">UDP 69</span><span class="tag">RFC 1350</span></div>
+  <p class="lead">TFTP es una versión minimalista de FTP: sin autenticación, sin listado de directorios y sobre UDP. Es tan simple que cabe en la memoria de un equipo que acaba de arrancar.</p>
+
+  <h3>Características</h3>
+  <ul>
+    <li><b>Sobre UDP:</b> el propio TFTP implementa su pequeña fiabilidad.</li>
+    <li><b>Sin autenticación ni cifrado</b> y sin comandos de directorio: solo leer o escribir un archivo conocido.</li>
+    <li><b>Bloques de 512 bytes</b> (ampliables con la extensión de opciones). Un bloque menor de 512 bytes indica el final del archivo.</li>
+    <li><b>Parada y espera (lock-step):</b> cada bloque <code>DATA</code> debe confirmarse con un <code>ACK</code> antes de enviar el siguiente; si no llega, se retransmite tras un timeout.</li>
+  </ul>
+
+  <h3>Tipos de paquete</h3>
+  <table>
+    <tr><th>Código</th><th>Paquete</th><th>Función</th></tr>
+    <tr><td>1</td><td>RRQ</td><td>Petición de lectura (descargar)</td></tr>
+    <tr><td>2</td><td>WRQ</td><td>Petición de escritura (subir)</td></tr>
+    <tr><td>3</td><td>DATA</td><td>Bloque de datos numerado</td></tr>
+    <tr><td>4</td><td>ACK</td><td>Confirmación del bloque</td></tr>
+    <tr><td>5</td><td>ERROR</td><td>Error y fin de la transferencia</td></tr>
+  </table>
+
+  <h3>Una transferencia paso a paso</h3>
+  <div class="diagram">  Cliente (puerto 3000)                          Servidor
+     | -- RRQ "router.cfg" -----------------&gt; :69     |  (petición al puerto 69)
+     | &lt;-- DATA bloque 1 (512 B) ------------ :4501  |  (responde desde otro puerto: TID)
+     | -- ACK 1 ------------------------------&gt; :4501 |
+     | &lt;-- DATA bloque 2 (512 B) ------------ :4501  |
+     | -- ACK 2 ------------------------------&gt; :4501 |
+     | &lt;-- DATA bloque 3 (200 B) ------------ :4501  |  ← menos de 512 B: último
+     | -- ACK 3 ------------------------------&gt; :4501 |  FIN</div>
+  <p>El servidor responde desde un puerto efímero nuevo (<i>TID</i>), de modo que el puerto 69 queda libre para atender nuevas solicitudes.</p>
+
+  <h3>¿Para qué se usa?</h3>
+  <ul>
+    <li><b>Arranque por red (PXE):</b> un equipo sin disco obtiene IP por DHCP y descarga su cargador de arranque por TFTP. DHCP indica el servidor y el archivo con las opciones 66 y 67.</li>
+    <li><b>Dispositivos de red:</b> respaldar y restaurar configuraciones y actualizar el firmware de routers, switches y teléfonos IP.</li>
+  </ul>
+<pre><code><span class="c"># Respaldar la configuración de un router Cisco hacia un servidor TFTP</span>
+Router# copy running-config tftp:
+Address or name of remote host []? 192.168.1.10
+Destination filename [router-confg]? router.cfg
+!!
+1024 bytes copied
+
+<span class="c"># Cliente TFTP en Linux</span>
+tftp 192.168.1.10 -c get router.cfg</code></pre>
+  <div class="note warn"><b>Seguridad</b>Como no hay autenticación, debe usarse solo en redes internas y de confianza, y el servidor debe restringir los directorios y los archivos accesibles.</div>
+
+  <h3>FTP vs TFTP</h3>
+  <table>
+    <tr><th></th><th>FTP</th><th>TFTP</th></tr>
+    <tr><td>Transporte</td><td>TCP (21 y datos)</td><td>UDP (69)</td></tr>
+    <tr><td>Autenticación</td><td>Usuario y contraseña</td><td>Ninguna</td></tr>
+    <tr><td>Directorios</td><td>Listar y navegar</td><td>No</td></tr>
+    <tr><td>Fiabilidad</td><td>La da TCP</td><td>La implementa el propio protocolo (ACK por bloque)</td></tr>
+    <tr><td>Complejidad</td><td>Alta</td><td>Mínima</td></tr>
+    <tr><td>Uso típico</td><td>Subir/bajar archivos de servidores</td><td>Arranque PXE y respaldos de dispositivos</td></tr>
+  </table>
+</article>
+
+<!-- ============ RESUMEN ============ -->
+<article id="resumen">
+  <h2>Tabla resumen</h2>
+  <table>
+    <tr><th>Protocolo</th><th>Capa</th><th>Transporte</th><th>Puerto(s)</th><th>Función</th></tr>
+    <tr><td>TCP</td><td>Transporte</td><td>—</td><td>—</td><td>Entrega fiable y ordenada</td></tr>
+    <tr><td>UDP</td><td>Transporte</td><td>—</td><td>—</td><td>Entrega rápida, sin garantías</td></tr>
+    <tr><td>DNS</td><td>Aplicación</td><td>UDP/TCP</td><td>53</td><td>Nombres ↔ direcciones IP</td></tr>
+    <tr><td>DHCP</td><td>Aplicación</td><td>UDP</td><td>67 / 68</td><td>Configuración automática de red</td></tr>
+    <tr><td>HTTP</td><td>Aplicación</td><td>TCP</td><td>80</td><td>Web (texto plano)</td></tr>
+    <tr><td>HTTPS</td><td>Aplicación</td><td>TCP</td><td>443</td><td>Web cifrada con TLS</td></tr>
+    <tr><td>SMTP</td><td>Aplicación</td><td>TCP</td><td>25 / 587 / 465</td><td>Enviar correo</td></tr>
+    <tr><td>POP3</td><td>Aplicación</td><td>TCP</td><td>110 / 995</td><td>Descargar correo</td></tr>
+    <tr><td>IMAP</td><td>Aplicación</td><td>TCP</td><td>143 / 993</td><td>Gestionar correo en el servidor</td></tr>
+    <tr><td>FTP</td><td>Aplicación</td><td>TCP</td><td>21 (+ datos)</td><td>Transferir archivos</td></tr>
+    <tr><td>TFTP</td><td>Aplicación</td><td>UDP</td><td>69</td><td>Transferir archivos de forma simple</td></tr>
+  </table>
+  <h3>Un ejemplo que los une a todos</h3>
+  <p>Al escribir <code>https://www.ejemplo.com</code> en tu navegador, dentro de una red recién conectada:</p>
+  <ol>
+    <li><b>DHCP</b> (UDP) te dio tu IP, puerta de enlace y servidor DNS.</li>
+    <li><b>DNS</b> (UDP) convirtió <code>www.ejemplo.com</code> en una IP.</li>
+    <li><b>TCP</b> abrió la conexión al puerto 443 con el saludo de tres vías.</li>
+    <li><b>TLS</b> negoció el cifrado y verificó el certificado.</li>
+    <li><b>HTTP</b> pidió la página y el servidor respondió <code>200 OK</code>.</li>
+  </ol>
+</article>
+
+<!-- ============ CONCLUSIONES ============ -->
+<article id="conclusiones">
+  <h2>Conclusiones</h2>
+  <ul>
+    <li>La capa de transporte ofrece dos filosofías: <b>TCP</b> prioriza la fiabilidad y <b>UDP</b> la velocidad. La elección depende de lo que la aplicación pueda tolerar.</li>
+    <li>Los protocolos de aplicación se apoyan en el transporte que mejor encaja con su función: servicios cortos y de consulta usan UDP (DNS, DHCP, TFTP), y los que necesitan datos íntegros usan TCP (HTTP, SMTP, FTP).</li>
+    <li>Varios protocolos clásicos (HTTP, FTP, POP3, SMTP, TFTP) nacieron sin cifrado. Hoy se protegen con TLS (HTTPS, FTPS, POP3S, IMAPS) o se sustituyen por alternativas seguras.</li>
+    <li>Entender los puertos, los estados y los mensajes de cada protocolo es clave para <b>configurar, diagnosticar y asegurar</b> redes reales.</li>
+  </ul>
+</article>
+
+<!-- ============ REFERENCIAS ============ -->
+<article id="refs">
+  <h2>Referencias</h2>
+  <ul>
+    <li>RFC 9293 — Transmission Control Protocol (TCP)</li>
+    <li>RFC 768 — User Datagram Protocol (UDP)</li>
+    <li>RFC 1034 y 1035 — Domain Names (DNS)</li>
+    <li>RFC 2131 — Dynamic Host Configuration Protocol (DHCP)</li>
+    <li>RFC 9110 — HTTP Semantics; RFC 9112 (HTTP/1.1); RFC 9113 (HTTP/2); RFC 9114 (HTTP/3)</li>
+    <li>RFC 8446 — Transport Layer Security (TLS) 1.3</li>
+    <li>RFC 5321 — Simple Mail Transfer Protocol (SMTP)</li>
+    <li>RFC 1939 — Post Office Protocol, Version 3 (POP3)</li>
+    <li>RFC 9051 — Internet Message Access Protocol (IMAP) versión 4rev2</li>
+    <li>RFC 959 — File Transfer Protocol (FTP)</li>
+    <li>RFC 1350 — The TFTP Protocol (Revision 2)</li>
+    <li>Kurose, J. y Ross, K. <i>Redes de computadoras: un enfoque descendente</i>. Pearson.</li>
+    <li>Tanenbaum, A. y Wetherall, D. <i>Redes de computadoras</i>. Pearson.</li>
+  </ul>
+  <p>Los RFC pueden consultarse gratis en <a href="https://www.rfc-editor.org" target="_blank" rel="noopener">rfc-editor.org</a>.</p>
+</article>
+
+</main>
+</div>
+
+<footer>
+  <b>Cristian Leonardo Guzmán de León</b> · Carné 0903-23-14434<br>
+  Redes de Computadoras I · Universidad Mariano Gálvez de Guatemala · Octubre 2026
+</footer>
+<button class="totop" id="totop" type="button" aria-label="Volver arriba">↑</button>
+
+<script>
+(function(){
+  // Tema claro/oscuro
+  var root=document.documentElement,btn=document.getElementById('theme');
+  try{var t=localStorage.getItem('theme');if(t)root.setAttribute('data-theme',t);}catch(e){}
+  btn.addEventListener('click',function(){
+    var dark=root.getAttribute('data-theme')==='dark' ||
+      (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    var next=dark?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('theme',next);}catch(e){}
+  });
+  // Menú "Ir a…" (móvil) y botón volver arriba
+  document.getElementById('jump').addEventListener('change',function(){
+    if(this.value){location.hash=this.value;this.value='';}
+  });
+  var up=document.getElementById('totop');
+  addEventListener('scroll',function(){up.classList.toggle('show',scrollY>700);},{passive:true});
+  up.addEventListener('click',function(){scrollTo({top:0,behavior:'smooth'});});
+  // Resaltar sección activa en el índice
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){links.forEach(function(l){l.classList.remove('on');});
+        var a=map[e.target.id];if(a)a.classList.add('on');}
+    });
+  },{rootMargin:'-20% 0px -70% 0px'});
+  Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el);});
+})();
+</script>
+</body>
+</html>
